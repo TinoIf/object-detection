@@ -1,7 +1,6 @@
 import streamlit as st
 import cv2
 import av
-import numpy as np
 from ultralytics import YOLO
 from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration, VideoProcessorBase
 
@@ -10,7 +9,7 @@ from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration, Vide
 # ==================================
 st.set_page_config(
     page_title="YOLOv8 Real-Time Detection",
-    page_icon="🚀",
+    page_icon="🤖",
     layout="wide"
 )
 
@@ -36,63 +35,30 @@ div[data-testid="stVideo"] {
 @st.cache_resource
 def load_yolo_model():
     """Memuat model YOLOv8 dan menyimpannya di cache."""
-    model = YOLO('yolov8n.pt')  # yolov8n.pt adalah model tercepat
+    model = YOLO('yolov8n.pt')
     return model
 
 model = load_yolo_model()
 
 
 # ==================================
-# 3. Class Processor Video dengan Optimasi
+# 3. Class Processor Video
 # ==================================
-# Variabel untuk optimasi bisa diubah di sini
-RESIZE_WIDTH = 640  # Perkecil gambar ke lebar 640 pixel
-PROCESS_EVERY_N_FRAME = 3  # Hanya proses setiap 3 frame
-
 class YoloVideoProcessor(VideoProcessorBase):
     def __init__(self, confidence_threshold: float):
         self.model = model
         self.confidence_threshold = confidence_threshold
-        # (OPTIMASI) Variabel untuk menyimpan hasil terakhir dan menghitung frame
-        self.last_results = None
-        self.frame_count = 0
 
     def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
-        """Menerima, memproses (dengan optimasi), dan mengembalikan frame."""
         image = frame.to_ndarray(format="bgr24")
-        self.frame_count += 1
-
-        # (OPTIMASI) Hanya proses jika ini adalah frame ke-N
-        if self.frame_count % PROCESS_EVERY_N_FRAME == 0:
-            # (OPTIMASI) Perkecil ukuran gambar sebelum deteksi
-            h, w, _ = image.shape
-            aspect_ratio = h / w
-            new_h = int(RESIZE_WIDTH * aspect_ratio)
-            resized_image = cv2.resize(image, (RESIZE_WIDTH, new_h))
-
-            # Lakukan pelacakan objek pada gambar yang sudah dikecilkan
-            results = self.model.track(
-                source=resized_image,
-                persist=True,
-                conf=self.confidence_threshold,
-                verbose=False,
-                tracker="bytetrack.yaml"
-            )
-
-            # Simpan hasil terakhir
-            self.last_results = results
-
-            # Gambar hasil deteksi pada gambar ASLI (bukan yang di-resize)
-            # Ini akan membuat bounding box diskalakan kembali ke ukuran asli
-            annotated_frame = self.last_results[0].plot(img=image)
-        else:
-            # Jika frame ini dilewati, gunakan hasil deteksi terakhir
-            if self.last_results:
-                annotated_frame = self.last_results[0].plot(img=image)
-            else:
-                # Jika belum ada deteksi sama sekali, tampilkan frame asli
-                annotated_frame = image
-
+        results = self.model.track(
+            source=image,
+            persist=True,
+            conf=self.confidence_threshold,
+            verbose=False,
+            tracker="bytetrack.yaml"
+        )
+        annotated_frame = results[0].plot()
         return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
 
 
@@ -102,16 +68,15 @@ class YoloVideoProcessor(VideoProcessorBase):
 col1, col2 = st.columns([0.4, 0.6], gap="large")
 
 with col1:
-    st.title("🚀 Deteksi Objek YOLOv8")
+    st.title("🤖 Deteksi Objek YOLOv8")
     st.markdown(
-        "Aplikasi ini melakukan **deteksi objek** secara *real-time* "
-        "dengan optimasi untuk performa lebih lancar."
+        "Aplikasi ini melakukan **deteksi dan pelacakan objek** secara *real-time*."
     )
     st.divider()
 
     st.subheader("⚙️ Pengaturan")
     confidence_threshold = st.slider(
-        "**Tingkat Kepercayaan**",
+        "**Tingkat Kepercayaan (Confidence)**",
         0.0, 1.0, 0.5, 0.05
     )
     st.divider()
@@ -121,8 +86,15 @@ with col1:
 with col2:
     st.subheader("🎥 Tampilan Kamera Real-Time")
 
+    # (FIX) Menambahkan daftar server STUN untuk koneksi yang lebih andal
     RTC_CONFIG = RTCConfiguration({
-        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+        "iceServers": [
+            {"urls": "stun:stun.l.google.com:19302"},
+            {"urls": "stun:stun1.l.google.com:19302"},
+            {"urls": "stun:stun2.l.google.com:19302"},
+            {"urls": "stun:stun.services.mozilla.com:3478"},
+            {"urls": "stun:stun.xten.com:3478"},
+        ]
     })
 
     webrtc_streamer(
