@@ -5,7 +5,11 @@ Aplikasi web interaktif ini dibangun menggunakan Python, Streamlit, dan model YO
 Contoh Hasil:
 ![Hasil Deteksi Botol](https://github.com/user-attachments/assets/0c1c19f7-a946-46b4-a258-07b037cb4238)
 ![hasil deteksi buku](https://github.com/user-attachments/assets/7f7ac418-01b8-4e0e-b350-c75717640d83)
-Selengkapnya pada repository Hasil
+![Hasil Deteksi Handphone](https://github.com/user-attachments/assets/7f35447e-3991-4571-95c8-a3d0b3dc2632)
+![hasil-deteksi-cup](https://github.com/user-attachments/assets/048b976c-6aa3-4f68-ad74-bdf7b9e3ec45)
+
+
+## Selengkapnya pada repository Hasil
 
 ---
 
