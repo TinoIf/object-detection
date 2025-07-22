@@ -2,6 +2,11 @@
 
 Aplikasi web interaktif ini dibangun menggunakan Python, Streamlit, dan model YOLOv8 untuk melakukan deteksi serta pelacakan objek secara *real-time* melalui kamera webcam atau dari file video yang diunggah.
 
+Contoh Hasil:
+![Hasil Deteksi Botol](https://github.com/user-attachments/assets/0c1c19f7-a946-46b4-a258-07b037cb4238)
+![hasil deteksi buku](https://github.com/user-attachments/assets/7f7ac418-01b8-4e0e-b350-c75717640d83)
+Selengkapnya pada repository Hasil
+
 ---
 
 ## 🚀 Demo Langsung
